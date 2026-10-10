@@ -1,0 +1,43 @@
+name: Build and Push to AWS ECR
+
+on:
+  push:
+    branches:
+      - main
+
+# Definimos una variable global para elegir el script fácilmente
+env:
+  PYTHON_SCRIPT: v2x_service.py # <-- Cambia aquí el nombre de tu archivo .py
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  # Cambia por tu región
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: v2x_prueba  # Nombre de tu repositorio en ECR
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Se pasa la variable PYTHON_SCRIPT como argumento de build a Docker
+          docker build \
+            --build-arg SCRIPT_NAME=${{ env.PYTHON_SCRIPT }} \
+            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+            -t $REGISTRY/$REPOSITORY:latest .
+
+          docker push $REGISTRY/$REPOSITORY --all-tags
