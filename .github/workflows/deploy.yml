@@ -7,11 +7,11 @@ on:
 
 env:
   AWS_REGION: us-east-1  # Cambia por tu región (ej. us-east-1)
-  ECR_REPOSITORY: v2x_prueba  # El nombre exacto de tu repositorio en Amazon ECR
+  ECR_REPOSITORY: v2x-service  # El nombre exacto de tu repositorio en Amazon ECR
 
 jobs:
   build-and-push:
-    name: Build, Push and Deploy to EC2
+    name: Build and Push to ECR
     runs-on: ubuntu-latest
 
     steps:
@@ -37,16 +37,3 @@ jobs:
         run: |
           docker build -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
-      - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
-            docker pull ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
-            docker stop v2x-container || true
-            docker rm v2x-container || true
-            docker run -d -p 5000:5000 --name v2x-container ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
