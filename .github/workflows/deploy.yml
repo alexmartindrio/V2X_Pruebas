@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: us-east-1  # Cambia por tu región (ej. us-east-1)
-  ECR_REPOSITORY: v2x-service  # El nombre exacto de tu repositorio en Amazon ECR
+  ECR_REPOSITORY: v2x_prueba  # El nombre exacto de tu repositorio en Amazon ECR
 
 jobs:
   build-and-push:
