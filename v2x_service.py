@@ -5,7 +5,7 @@ from flask import Flask, jsonify, render_template_string
 import boto3
  
 app = Flask(__name__)
-
+ 
 # ⚠️ PEGA AQUÍ LA URL REAL QUE HAS COPIADO DE AWS SQS
 SQS_REGION = 'us-east-1'
 QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/523572554218/V2X_1'
