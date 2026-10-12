@@ -48,7 +48,7 @@ jobs:
               "docker pull ${{ steps.login-ecr.outputs.registry }}/v2x_prueba:latest",
               "docker stop mi-contenedor || true",
               "docker rm mi-contenedor || true",
-              "docker run -d --name mi-contenedor -p 80:80 ${{ steps.login-ecr.outputs.registry }}/v2x_prueba:latest"
+              "docker run -d --name mi-contenedor -p 80:5000 ${{ steps.login-ecr.outputs.registry }}/v2x_prueba:latest"
             ]' \
             --region us-east-1 \
             --query "Command.CommandId" \
