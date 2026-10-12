@@ -2,10 +2,10 @@ name: Deploy to AWS ECR, S3 & EC2
 
 on:
   push:
-    branches: [ main ] # Cambia a la rama que utilices (ej. master)
+    branches: [ main ]
 
 jobs:
-      deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -16,7 +16,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1 # ⚠️ CAMBIA POR TU REGIÓN DE AWS (ej. eu-west-1)
+          aws-region: us-east-1
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -25,7 +25,7 @@ jobs:
       - name: 1. Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: v2x_prueba # ⚠️ CAMBIA POR EL NOMBRE DE TU REPO EN ECR
+          ECR_REPOSITORY: v2x_prueba
           IMAGE_TAG: latest
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -34,7 +34,7 @@ jobs:
       - name: 2. Subir archivo .txt (versión) al Bucket S3
         run: |
           echo "${{ github.sha }}" > version.txt
-          aws s3 cp version.txt s3://v2xprueba1/version.txt # ⚠️ CAMBIA POR EL NOMBRE DE TU BUCKET
+          aws s3 cp version.txt s3://v2xprueba1/version.txt
 
       - name: 3. Actualizar EC2 mediante AWS Systems Manager
         run: |
@@ -43,9 +43,9 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
               "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}",
-              "docker pull ${{ steps.login-ecr.outputs.registry }}/tu-repositorio-ecr:latest",
+              "docker pull ${{ steps.login-ecr.outputs.registry }}/v2x_prueba:latest",
               "docker stop mi-contenedor || true",
               "docker rm mi-contenedor || true",
-              "docker run -d --name mi-contenedor -p 80:80 ${{ steps.login-ecr.outputs.registry }}/tu-repositorio-ecr:latest"
+              "docker run -d --name mi-contenedor -p 80:80 ${{ steps.login-ecr.outputs.registry }}/v2x_prueba:latest"
             ]' \
-            --region us-east-1 # ⚠️ ASEGÚRATE DE PONER LA MISMA REGIÓN
+            --region us-east-1
