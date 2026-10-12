@@ -37,9 +37,8 @@ jobs:
           echo "${{ github.sha }}" > version.txt
           aws s3 cp version.txt s3://v2xprueba1/version.txt
 
-      - name: 3. Actualizar EC2 mediante AWS Systems Manager y mostrar errores
+      - name: 3. Actualizar EC2 liberando el puerto y lanzando contenedor
         run: |
-          # Enviar el comando
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "i-0aca8c0fe600148fa" \
             --document-name "AWS-RunShellScript" \
@@ -48,13 +47,15 @@ jobs:
               "docker pull ${{ steps.login-ecr.outputs.registry }}/v2x_prueba:latest",
               "docker stop mi-contenedor || true",
               "docker rm mi-contenedor || true",
+              "docker ps -q --filter publish=5000 | xargs -r docker stop || true",
+              "docker ps -a -q --filter publish=5000 | xargs -r docker rm || true",
               "docker run -d --name mi-contenedor -p 5000:5000 ${{ steps.login-ecr.outputs.registry }}/v2x_prueba:latest"
             ]' \
             --region us-east-1 \
             --query "Command.CommandId" \
             --output text)
 
-          echo "Comando enviado ($COMMAND_ID). Esperando 10 segundos a que procese..."
+          echo "Comando enviado ($COMMAND_ID). Esperando 10 segundos..."
           sleep 10
 
           echo "--- LOGS DE SALIDA ---"
@@ -73,7 +74,6 @@ jobs:
             --query "StandardErrorContent" \
             --output text || true
 
-          # Forzar fallo en GitHub si no fue exitoso
           STATUS=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "i-0aca8c0fe600148fa" --region us-east-1 --query "Status" --output text)
           if [ "$STATUS" != "Success" ]; then
             echo "El comando SSM falló con estado: $STATUS"
